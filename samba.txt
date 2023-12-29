@@ -1,0 +1,75 @@
+[global]
+        workgroup = SRVORACLE
+        netbios name = SRVORACLE
+        server string = SRVORACLE
+        security = SHARE
+        passwd program = /usr/bin/passwd %u
+        log file = /var/log/samba/%m.log
+        max log size = 0
+        socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=8192 SO_SNDBUF=8192 SO_KEEPALIVE
+        dead time = 15
+        getwd cache = yes
+        dns proxy = No
+        use sendfile = yes
+        strict locking = no
+        read raw = yes
+        write raw = yes
+        oplocks = yes
+        max xmit = 65535
+        veto files = /*.wma/*.mp3/autorun.inf/ETC.exe/...exe/..exe/Recycled.exe/recycled.exe/*.eml/pp.exe
+
+[sistema]
+        comment = Compartilhamento
+        path = /sistema
+        read only = No
+        create mask = 0777
+        force create mode = 0777
+        directory mask = 0777
+        force directory mode = 0777
+        guest only = Yes
+        guest ok = Yes
+
+-----------------------------------------------------------------------------------------------------------
+[global]
+        workgroup = SRVORACLE
+        netbios name = SRVORACLE
+        server string = SRVORACLE
+        security = SHARE
+        passwd program = /usr/bin/passwd %u
+        log file = /var/log/samba/%m.log
+        max log size = 0
+        socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=8192 SO_SNDBUF=8192 SO_KEEPALIVE
+        dead time = 15
+        getwd cache = yes
+        dns proxy = No
+        use sendfile = yes
+        strict locking = no
+        read raw = yes
+        write raw = yes
+        oplocks = yes
+        max xmit = 65535
+        veto files = /*.wma/*.mp3/autorun.inf/ETC.exe/...exe/..exe/Recycled.exe/recycled.exe/*.eml/pp.exe
+
+[sistema]
+        comment = Compartilhamento WINTHOR
+        path = /sistema
+        read only = No
+        create mask = 0777
+        force create mode = 0777
+        directory mask = 0777
+        force directory mode = 0777
+        guest only = Yes
+        guest ok = Yes
+
+[bkpexport]
+        comment = Compartilhamento do backup export
+        path = /hdexterno/oradata/WINT/export/
+        read only = No
+        create mask = 0777
+        force create mode = 0777
+        directory mask = 0777
+        force directory mode = 0777
+        guest only = Yes
+        guest ok = Yes
+
+

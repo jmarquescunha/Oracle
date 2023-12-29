@@ -1,0 +1,8 @@
+*** PARTICIONAMENTO ORACLE GRID STANDALONE
+
+/oracle  = 12540
+/        = 15360
+/boot    = 512
+/sistema = 46080
+/swap    = 4096
+/db      = não deverá ser particionado na instalação, deixar para o disco ASM.

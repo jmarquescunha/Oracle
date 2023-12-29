@@ -1,0 +1,90 @@
+------------------ Start dbora ---------------------------------
+
+#! /bin/bash
+#
+# description: Oracle auto start-stop script.
+#
+# chkconfig: 2345 99 10 
+#
+# processname: oracle
+# config: /etc/oratab
+# pidfile: /var/run/oracle.pid
+
+# Source function library.
+. /etc/init.d/functions
+
+RETVAL=0
+ORA_OWNER="oracle"
+ORA_HOME="/oracle/ora11g/app/oracle/products/11g"
+
+# See how we were called.
+
+prog="oracle"
+
+start() {
+echo -n $"Starting $prog: "
+su - $ORA_OWNER -c "$ORA_HOME/bin/dbstart" 
+su - $ORA_OWNER -c "$ORA_HOME/bin/lsnrctl start"
+RETVAL=$?
+echo
+[ $RETVAL -eq 0 ] && touch /var/lock/subsys/dbora
+
+return $RETVAL
+}
+
+stop() {
+echo -n $"Stopping $prog: "
+su - $ORA_OWNER -c "$ORA_HOME/bin/dbshut" 
+su - $ORA_OWNER -c "$ORA_HOME/bin/lsnrctl stop"
+RETVAL=$?
+echo
+[ $RETVAL -eq 0 ] && rm -r /var/lock/subsys/dbora
+
+return $RETVAL
+} 
+
+restart() {
+stop
+start
+} 
+
+case "$1" in
+start)
+start
+;;
+stop)
+stop
+;;
+restart)
+restart
+;;
+*)
+echo $"Usage: $0 {start|stop|restart}"
+exit 1
+esac
+
+exit $?
+------------------ End dbora ---------------------------------
+
+Step - 3: From root run the following:
+
+# cd /sbin
+# chkconfig --add dbora
+
+chmod 775 /etc/init.d/dbora
+
+This will create a system service viz. dbora
+# chkconfig --list
+
+This also creates the following files:
+
+/etc/rc2.d/S99dbora ( calls $ORACLE_HOME/bin/dbstart )
+/etc/rc3.d/S99dbora ( calls $ORACLE_HOME/bin/dbstart )
+/etc/rc4.d/S99dbora ( calls $ORACLE_HOME/bin/dbstart )
+/etc/rc5.d/S99dbora ( calls $ORACLE_HOME/bin/dbstart )
+
+/etc/rc0.d/K10dbora ( calls $ORACLE_HOME/bin/dbshut )
+/etc/rc1.d/K10dbora ( calls $ORACLE_HOME/bin/dbshut )
+/etc/rc6.d/K10dbora ( calls $ORACLE_HOME/bin/dbshut )
+
+

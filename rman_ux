@@ -1,0 +1,211 @@
+#!/bin/sh
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_verify(): Verify that database is online
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_verify(){
+  STATUS=`ps -fu ${ORA_OWNER} |grep -v grep| grep ora_pmon_${ORA_SID}`
+   funct_chk_unix_command_status  "O banco de dados SID($ORA_SID),Owner ($ORA_OWNER) nao esta aberto para o backup. Verifique!"
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_chk_parm(): Check for input parameters
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_chk_parm() {
+if [ ${NARG} -ne 2 ]; then
+  echo "RMAN_FAIL: ${ORA_SID}, Not enough arguments passed"
+  exit 1
+fi
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_chk_bkup_dir(): Create backup directories if not already exist
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_chk_bkup_dir() {
+
+  if  [ ! -d  ${HOMEBACKUP} ]; then  mkdir -p  ${HOMEBACKUP}; fi
+  if  [ ! -d  ${BACKUPDIR} ]; then  mkdir -p  ${BACKUPDIR}; fi
+  if  [ ! -d  ${DATABACKUP} ]; then  mkdir -p  ${DATABACKUP}; fi
+  if  [ ! -d  ${CONTROLBACKUP} ]; then  mkdir -p  ${CONTROLBACKUP}; fi
+  if  [ ! -d  ${ARCHIVEBACKUP} ]; then  mkdir -p  ${ARCHIVEBACKUP}; fi
+  if  [ ! -d  ${LOGRMAN} ]; then  mkdir -p  ${LOGRMAN}; fi
+  if  [ ! -d  ${LOGBACKUP} ]; then  mkdir -p  ${LOGBACKUP}; fi
+  if  [ ! -d  ${COMPACTDIR} ]; then  mkdir -p  ${COMPACTDIR}; fi
+  if  [ ! -d  ${DESTINODIR} ]; then  mkdir -p  ${DESTINODIR}; fi
+
+  BACKUPLOGFILE="${LOGBACKUP}/backup_log_${ORA_SID}.log"
+
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_get_vars_10g(): Variaveis necessarias a geracao do backup para Oracle 10g
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_get_vars_10g(){
+ORA_HOME=/oracle/product/10.2.0/db_1
+ORA_BASE=/oracle
+ORACLE_BASE=${ORA_BASE}
+ORACLE_HOME=${ORA_HOME}; export ORACLE_HOME
+ORACLE_SID=${ORA_SID}; export ORACLE_SID
+CON_STRING=${ORA_SID}
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_get_vars_11g(): Variaveis necessarias a geracao do backup para Oracle 10g
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_get_vars_11g(){
+ORA_HOME=/oracle/app/oracle/product/11.2/db_1
+ORA_BASE=/oracle/app/oracle
+ORACLE_BASE=${ORA_BASE}
+ORACLE_HOME=${ORA_HOME}; export ORACLE_HOME
+ORACLE_SID=${ORA_SID}; export ORACLE_SID
+CON_STRING=${ORA_SID}
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_rman(): Executar o backup atraves do rman
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_rman(){
+
+${ORACLE_HOME}/bin/rman target / catalog RMAN/DBASOLUTI@RMAN << EOF
+#>> ${LOGRMAN}/bkp_bd_full_${HOJE}.log << EOF
+
+CONFIGURE CONTROLFILE AUTOBACKUP ON;
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '${CONTROLBACKUP}/autobackup_control_file%F';
+CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 1 DAYS;
+run {
+ALLOCATE CHANNEL RMAN_BACK_CH01 TYPE DISK;
+CROSSCHECK BACKUP;
+CROSSCHECK ARCHIVELOG ALL;
+BACKUP AS COMPRESSED BACKUPSET DATABASE FORMAT '${DATABACKUP}/databasefiles_%T';
+sql 'ALTER SYSTEM ARCHIVE LOG CURRENT';
+BACKUP AS COMPRESSED BACKUPSET ARCHIVELOG ALL FORMAT '${ARCHIVEBACKUP}/archivelogs_%T' DELETE INPUT;
+BACKUP AS COMPRESSED BACKUPSET CURRENT CONTROLFILE FORMAT '${CONTROLBACKUP}/controlfile_%T';
+CROSSCHECK BACKUP;
+DELETE NOPROMPT OBSOLETE;
+DELETE NOPROMPT EXPIRED BACKUP;
+RELEASE CHANNEL RMAN_BACK_CH01;
+}
+EXIT;
+
+EOF
+
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_compact(): Empacotar e compactar a pasta de exportacao
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_compact() {
+   tar cvfz "${COMPACTDIR}/${ARQCOMPACT}" "${BACKUPDIR}/" > /dev/null
+   funct_chk_unix_command_status  "RMAN_FAIL: ${ORA_SID}, Falha ao compactar."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_permissao(): Mudar permissãdo arquivo
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_permissao() {
+   chmod 777 "${COMPACTDIR}/${ARQCOMPACT}"
+   funct_chk_unix_command_status  "RMAN_FAIL: ${ORA_SID}, Falha ao mudar permissao do arquivo compactado."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_apagant(): Apagar backups nao movidos para $COMPACTDIR
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_apagant() {
+   find ${COMPACTDIR}/*.tar.gz -mmin +1 -exec rm -rf {} \;
+   #funct_chk_unix_command_status  "RMAN_FAIL: ${ORA_SID}, Falha ao apagar arquivos compactados e nãmovidos."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_apagmov(): Apagar backups gerados no diretorio $DESTINODIR com mais de 7 dias
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_apagmov() {
+   find ${DESTINODIR}/rman.*.tar.gz -mmin +1 -exec rm -rf {} \;
+   #funct_chk_unix_command_status  "RMAN_FAIL: ${ORA_SID}, Falha ao apagar arquivos movidos."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_move(): Mover o arquivo compactado para diretorio destino do backup
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_move() {
+   mv "${COMPACTDIR}/${ARQCOMPACT}" "${DESTINODIR}"
+   funct_chk_unix_command_status  "RMAN_FAIL: ${ORA_SID}, Falha ao mover arquivo compactado."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_chk_unix_command_status(): Check the exit status of Unix command
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_chk_unix_command_status() {
+        if [ $? != 0 ]; then
+                echo  "`date`" |tee -a ${BACKUPLOGFILE} >> ${LOGBACKUP}/${ORA_SID}.log
+                echo  "RMAN_FAIL:  ${1}  "| tee -a ${BACKUPLOGFILE} >> ${LOGBACKUP}/${ORA_SID}.log
+                exit 1
+        fi
+}
+
+#######################################
+#           MAIN
+#######################################
+
+NARG=$#
+ORA_SID=$1
+ORA_OWNER=$2
+
+# Instalaçs anteriores nãpossuem diretorio /backup.
+# Neste caso, o valor das variaveis serao alterados para o /oracle
+# conforme a seguir:
+# HOMEBACKUP="/oracle/datapump"
+# LOGDIR="/oracle/log/datapump"
+# DESTINODIR="/oracle/copiabackup"
+
+# Set up the environment
+DTRMAN=`date +%Y_%m_%d`
+HOMEBACKUP="/db/oradata"
+BACKUPDIR="${HOMEBACKUP}/${ORA_SID}/rman/${DTRMAN}"
+DATABACKUP="${BACKUPDIR}/data"
+CONTROLBACKUP="${BACKUPDIR}/controlfile"
+ARCHIVEBACKUP="${BACKUPDIR}/archivelogs"
+LOGRMAN="${BACKUPDIR}/logs"
+COMPACTDIR="${HOMEBACKUP}"
+
+# Diretorio do log gerado
+LOGBACKUP="/db/oradata/WINT/rman/logs"
+
+# Variaveis destino do backup
+DESTINODIR="/db/oradata/WINT/rman/copiabackup"
+DESTINOREM="/mnt/hdext"
+
+#Variaveis de data
+#HOJE=`date +%A`
+HOJE=`date +%Y%m%d_%H%M`
+
+# Nome do arquivo a ser criado
+ARQCOMPACT="rman.${ORA_SID}.${HOJE}.tar.gz"
+#ARQCOMPACT="rman.${ORA_SID}.tar.gz"
+
+#Exportando variavel NLS_LANG
+export NLS_LANG=AMERICAN_AMERICA.WE8ISO8859P1
+
+
+        funct_chk_bkup_dir
+        funct_chk_parm
+
+                # Definir qual versao sera usada e entao retirar o comentario.
+                # Sem retirar o comentario, o backup nao sera executado.
+
+                #funct_get_vars_10g
+                funct_get_vars_11g
+
+        echo "***********************************"  >> ${LOGBACKUP}/${ORA_SID}.log
+        echo "***********************************"  >> ${LOGBACKUP}/${ORA_SID}.log
+        echo "...Iniciando o rman ....  ${ORA_SID} as `date +\"%c\"`" >> ${LOGBACKUP}/${ORA_SID}.log
+        echo "***********************************"  >> ${LOGBACKUP}/${ORA_SID}.log
+
+        funct_verify
+        funct_apagant
+                funct_apagmov
+                funct_rman
+        funct_compact
+                funct_permissao
+                funct_move
+
+   echo "${ORA_SID}, rman completado com sucesso - `date +\"%c\"` "  >> ${LOGBACKUP}/${ORA_SID}.log

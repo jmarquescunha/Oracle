@@ -1,0 +1,302 @@
+#!/bin/bash
+
+#####################################################################
+# PROGRAM NAME:         datapump_ux
+# AUTHOR:               Raj Gutta
+# PURPOSE:              This utility will perform a expdp of  the database
+# MODIFIED:     Jeferson Marques Cunha
+#                               Acrescentada rotina de compactar e envio dos arquivos por rsync
+#                               Alteracao da forma de obtencao das variaveis de ambiente
+#                               Alteracao do export para o datapump
+# USAGE:                datapump_ux SID OWNER
+# Criacao do diretorio: create directory BACKUP as '/backup/dbora/datapump/WINT';
+#                                   grant read, write on directory BACKUP to bck_exporta;
+######################################################################
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_verify(): Verify that database is online
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_verify(){
+  STATUS=`ps -fu ${ORA_OWNER} |grep -v grep| grep ora_pmon_${ORA_SID}`
+   funct_chk_unix_command_status  "O banco de dados SID($ORA_SID),Owner ($ORA_OWNER) na esta aberto para exportacao. Verifique"
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_cleanup(): Cleanup interim files
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_cleanup() {
+echo "Left for user convenience" > /dev/null
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_build_parfile():  This will create parameter file
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_build_parfile() {
+# This line makes sure that it always creates a new parameter file
+echo " " >${PARFILE}
+echo "userid=exporta/exporta">>${PARFILE}
+# if you use connect string. see next line.
+#echo "userid=usuario/senha@${CON_STRING}">>${PARFILE}
+#echo "Owner=scott">>${PARFILE}
+#echo "Fromuser=scott">>${PARFILE}
+#echo "Touser=king">>${PARFILE}
+#echo "Tables=scott.emp">>${PARFILE}
+echo "Full=Y">>${PARFILE}
+echo "Directory=BACKUP">>${PARFILE}
+#echo "PARALLEL=4">>${PARFILE}
+#echo "Direct=Y">>${PARFILE}
+#echo "Grants=Y">>${PARFILE}
+#echo "Statistics=NONE">>${PARFILE}
+#echo "Buffer=104857600">>${PARFILE}
+#echo "Indexes=Y">>${PARFILE}
+#echo "Rows=Y">>${PARFILE}
+#echo "Constraints=Y">>${PARFILE}
+#echo "Compress=N">>${PARFILE}
+#echo "Consistent=Y">>${PARFILE}
+echo "DUMPFILE=${FILE}">>${PARFILE}
+echo "LogFile=${ORA_SID}_exp.log">>${PARFILE}
+}
+
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_export(): Export the database
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_export() {
+
+# Remove o arquivo antigo do export
+#rm -f  ${BACKUPDIR}/${FILE}
+rm -f  ${DYN_DIR}/${FILE}
+funct_chk_unix_command_status  "DATAPUMP_FAIL: ${ORA_SID}, Remover arquivo de export antigo."
+
+# Gerar export
+${ORACLE_HOME}/bin/expdp parfile=${PARFILE}
+funct_chk_unix_command_status  "DATAPUMP_FAIL: ${ORA_SID}, Export Failed"
+
+}
+
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_chk_parm(): Check for input parameters
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_chk_parm() {
+if [ ${NARG} -ne 2 ]; then
+  echo "DATAPUMP_FAIL: ${ORA_SID}, Not enough arguments passed"
+  exit 1
+fi
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_chk_bkup_dir(): Create backup directories if not already exist
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_chk_bkup_dir() {
+  EXPORT_DIR=${BACKUPDIR}
+
+  if  [ ! -d  ${HOMEBACKUP} ]; then  mkdir -p  ${HOMEBACKUP}; fi
+  if  [ ! -d  ${EXPORT_DIR} ]; then  mkdir -p  ${EXPORT_DIR}; fi
+  if  [ ! -d  ${DYN_DIR} ]; then  mkdir -p  ${DYN_DIR}; fi
+  if  [ ! -d  ${LOGDIR} ]; then  mkdir -p  ${LOGDIR}; fi
+  if  [ ! -d  ${COMPACTDIR} ]; then  mkdir -p  ${COMPACTDIR}; fi
+  if  [ ! -d  ${DESTINODIR} ]; then  mkdir -p  ${DESTINODIR}; fi
+
+  FILE="${ORA_SID}.dmp"
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_get_vars_10g(): Variaveis necessarias a geracao do backup para Oracle 10g
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_get_vars_10g(){
+ORA_HOME=/oracle/product/10.2.0/db_1
+ORA_BASE=/oracle
+ORACLE_BASE=${ORA_BASE}
+ORACLE_HOME=${ORA_HOME}; export ORACLE_HOME
+ORACLE_SID=${ORA_SID}; export ORACLE_SID
+CON_STRING=${ORA_SID}
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_get_vars_11g(): Variaveis necessarias a geracao do backup para Oracle 10g
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_get_vars_11g(){
+ORA_HOME=/oracle/app/oracle/product/11.2/db_1
+ORA_BASE=/oracle/app/oracle
+ORACLE_BASE=${ORA_BASE}
+ORACLE_HOME=${ORA_HOME}; export ORACLE_HOME
+ORACLE_SID=${ORA_SID}; export ORACLE_SID
+CON_STRING=${ORA_SID}
+}
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_compact(): Empacotar e compactar a pasta de exportacao
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_compact() {
+   tar cvfz "${COMPACTDIR}/${ARQCOMPACT}" "${BACKUPDIR}/" > /dev/null
+   funct_chk_unix_command_status  "DATAPUMP_FAIL: ${ORA_SID}, Falha ao compactar."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_move(): Mover o arquivo compactado para diretorio destino do backup
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_move() {
+   mv "${COMPACTDIR}/${ARQCOMPACT}" "${DESTINODIR}"
+   funct_chk_unix_command_status  "DATAPUMP_FAIL: ${ORA_SID}, Falha ao mover arquivo compactado."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_copy(): Copiar arquivo para outro diretorio. Utilizado quando for copiar para destino remoto.
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_copy() {
+   cp "${DESTINODIR}/${ARQCOMPACT}" "${DESTINOREM}"
+   funct_chk_unix_command_status  "DATAPUMP_FAIL: ${ORA_SID}, Falha ao copiar arquivo compactado para destino remoto."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_rsync(): Envia os arquivos gerados para o servidor secundario
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_rsync() {
+   rsync -Cravzp "${COMPACTDIR}/${ARQCOMPACT}" oracle@${SERVIDOR}:${COMPACTDIR}/
+   funct_chk_unix_command_status  "DATAPUMP_FAIL: ${ORA_SID}, Falha ao enviar o arquivo ${ARQCOMPACT} para o servidor secundario"
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_ftp(): Transmitir via ftp para SRVDOMAIN
+#            : ATENCAO -> TRANSMISSAO FEITA EM MODO NAO PASSIVO
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_ftp() {
+  HOST="servidor"
+  USER=usuario
+  PASSWD=senha
+  cd ${COMPACTDIR}
+  ftp -n $HOST << END_FTP
+ passive
+ prompt
+  quote user $USER
+  quote pass $PASSWD
+  bin
+  put ${ARQCOMPACT}
+  close
+  quit
+END_FTP
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_permissao(): Mudar permissãdo arquivo
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_permissao() {
+   chmod 777 "${COMPACTDIR}/${ARQCOMPACT}"
+   funct_chk_unix_command_status  "DATAPUMP_FAIL: ${ORA_SID}, Falha ao mudar permissao do arquivo compactado."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_apagant(): Apagar backups nao movidos para $COMPACTDIR
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_apagant() {
+   find ${COMPACTDIR}/*.tar.gz -mmin +1 -exec rm -rf {} \;
+   #funct_chk_unix_command_status  "DATAPUMP_FAIL: ${ORA_SID}, Falha ao apagar arquivos compactados e nãmovidos."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_apagmov(): Apagar backups gerados no diretorio $DESTINODIR e deixar apenas 1 copia.
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_apagmov() {
+   find ${DESTINODIR}/expdp.*.tar.gz -mmin +1 -exec rm -rf {} \;
+   #funct_chk_unix_command_status  "DATAPUMP_FAIL: ${ORA_SID}, Falha ao apagar arquivos movidos."
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_apagrem(): Apagar backups gerados no diretorio $DESTINOREM com mais de X dias
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_apagrem() {
+   find ${DESTINOREM}/expdp.*.tar.gz -mtime +7 -exec rm -rf {} \;
+   #funct_chk_unix_command_status  "DATAPUMP_FAIL: ${ORA_SID}, Falha ao apagar arquivos remotos."
+}
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# funct_chk_unix_command_status(): Check exit status of Unix command
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+funct_chk_unix_command_status() {
+        if [ $? != 0 ];  then
+                echo  "`date`" >> ${LOGDIR}/${ORA_SID}.log
+                echo  "DATAPUMP_FAIL:  ${1}  "  >> ${LOGDIR}/${ORA_SID}.log
+                exit 1
+        fi
+}
+
+#######################################
+#           MAIN
+#######################################
+
+NARG=$#
+ORA_SID=$1
+ORA_OWNER=$2
+
+# Instalações anteriores não possuem diretorio /backup.
+# Neste caso, o valor das variaveis serao alterados para o /oracle
+# Variáis:
+# HOMEBACKUP
+# LOGDIR
+# DESTINODIR
+
+# Variaveis dos diretorios
+HOMEBACKUP="/db/oradata"
+#HOMEBACKUP="/oracle/datapump"
+
+BACKUPDIR="${HOMEBACKUP}/${ORA_SID}"
+TOOLS="${BACKUPDIR}"
+DYN_DIR="${TOOLS}/datapump"
+PARFILE="${DYN_DIR}/expdp.par"
+COMPACTDIR="${HOMEBACKUP}"
+
+# Diretorio do log gerado
+LOGDIR="${DYN_DIR}/logs"
+#LOGDIR="/oracle/log/datapump"
+
+# Variaveis de destino dos arquivos gerados.
+DESTINODIR="${DYN_DIR}/copiabackup"
+#DESTINODIR="/oracle/copiabackup"
+
+#Variaveis Criadas
+#HOJE=`date +%A`
+HOJE=`date +%Y%m%d_%H%M`
+
+#Nome do arquivo a ser criado
+ARQCOMPACT="expdp.${ORA_SID}.${HOJE}.tar.gz"
+
+#Exportando variavel NLS_LANG
+export NLS_LANG=AMERICAN_AMERICA.WE8ISO8859P1
+
+
+   echo "...Iniciando o expdp ....  ${ORA_SID}"
+
+
+        funct_chk_bkup_dir
+        funct_chk_parm
+
+                # Definir qual versao sera usada e entao retirar o comentario.
+                # Sem retirar o comentario, o backup nao sera executado.
+
+                #funct_get_vars_10g
+                funct_get_vars_11g
+
+   echo "***********************************"  >> $LOGDIR/${ORA_SID}.log
+   echo "***********************************"  >> $LOGDIR/${ORA_SID}.log
+   echo "...Iniciando o expdp ....  ${ORA_SID} as `date +\"%c\"`" >> $LOGDIR/${ORA_SID}.log
+   echo "***********************************"  >> $LOGDIR/${ORA_SID}.log
+
+        funct_verify
+        funct_apagant
+                funct_apagmov
+                #funct_apagrem
+                funct_build_parfile
+        funct_export
+        funct_compact
+                funct_permissao
+
+                #Definir a rotina que serátilizada
+                #funct_ftp
+                funct_move
+                #funct_rsync
+                #funct_copy
+
+                 funct_cleanup
+
+   echo "${ORA_SID}, expdp completado com sucesso - `date +\"%c\"` "  >> $LOGDIR/${ORA_SID}.log
+
+#######################  END MAIN ###############################

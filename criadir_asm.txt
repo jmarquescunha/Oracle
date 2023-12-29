@@ -1,0 +1,49 @@
+*** LOGAR COM USUÁRIO GRID
+*** ENTRAR NO ASMCMD
+
+cd DATA
+mkdir db
+cd db
+mkdir oradata/
+cd oradata
+mkdir WINT
+cd WINT
+mkdir admin
+cd admin
+mkdir adump
+mkdir udump
+mkdir cdump
+mkdir bdump
+mkdir diag
+cd ..
+mkdir archive
+mkdir rman
+cd rman
+mkdir logs
+cd ..
+mkdir flashback
+mkdir espelhoredo
+mkdir espelhocontrole
+mkdir undo 
+mkdir indices
+mkdir temporario
+mkdir datapump
+mkdir controlestandby
+mkdir dados
+mkdir redo
+mkdir dicionario
+mkdir controle 
+----------------------------------------------------------------
+cd FRA
+mkdir db
+cd db
+mkdir oradata
+cd oradata
+mkdir WINT
+cd WINT
+mkdir archive
+
+
+
+
+

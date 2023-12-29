@@ -1,0 +1,98 @@
+*** TABLESPACE - TS_DADOS
+
+create tablespace TS_DADOS datafile '/u01/app/oracle/oradata/WINT/datafile/ts_dados01.dbf' size 30G ;
+alter tablespace TS_DADOS add datafile '/u01/app/oracle/oradata/WINT/datafile/ts_dados02.dbf' size 30G;
+alter tablespace TS_DADOS add datafile '/u01/app/oracle/oradata/WINT/datafile/ts_dados03.dbf' size 30G;
+alter tablespace TS_DADOS add datafile '/u01/app/oracle/oradata/WINT/datafiles/ts_dados04.dbf' size 10G;
+------------------------------------------------------------------------------------------
+*** TABLESPACE - TS_INDICES 
+
+create tablespace TS_INDICE datafile '/u01/app/oracle/oradata/WINT/datafile/ts_indice01.dbf' size 30G;
+alter tablespace TS_INDICE add datafile '/u01/app/oracle/oradata/WINT/datafiles/ts_indice02.dbf' size 30G;
+alter tablespace TS_INDICE add datafile '/db/oradata/WINT/indices/ts_indice03.dbf' size 10G;
+------------------------------------------------------------------------------------------
+*** TABLESPACE - TS_MAXIMA 
+
+create tablespace TS_MAXIMA datafile '/u01/app/oracle/oradata/WINT/datafile/ts_maxima01.dbf' size 15G autoextend on next 100M maxsize unlimited;
+alter tablespace TS_MAXIMA add datafile '/u01/app/oracle/oradata/WINT/datafiles/ts_maxima02.dbf' size 30G;
+
+-------------------------------------------------------------------------------------------
+*** TABLESPACE - TS_ION_DATA E TS_ION_INDEX 
+
+create tablespace TS_ION_DATA datafile '/u01/app/oracle/oradata/WINT/datafile/ts_ion_data01.dbf' size 2G autoextend on next 100M maxsize unlimited;
+create tablespace TS_ION_INDEX datafile '/u01/app/oracle/oradata/WINT/datafile/ts_ion_index01.dbf' size 2G autoextend on next 100M maxsize unlimited;
+
+-------------------------------------------------------------------------------------------
+create tablespace TS_RMAN datafile '/db/oradata/RMAN/dados/ts_rman01.dbf' size 500M;
+-------------------------------------------------------------------------------------------
+***TABLESPACES - TS_PCDTPROD
+
+CREATE TABLESPACE TS_PCDTPROD DATAFILE '/db/oradata/WINT/dados/TS_PCDTPROD01.dbf' SIZE 28G;
+--------------------------------------------------------------------------------------------
+*** TABLESPACES - TS_PCDTPRODIDX
+
+CREATE TABLESPACE TS_PCDTPRODIDX DATAFILE '/db/oradata/WINT/indices/TS_PCDTPRODIDX01.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCDTPRODIDX ADD DATAFILE '/db/oradata/WINT/indices/TS_PCDTPRODIDX02.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCDTPRODIDX ADD DATAFILE '/db/oradata/WINT/indices/TS_PCDTPRODIDX03.dbf'SIZE 26G;
+-------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCLOGS
+
+CREATE TABLESPACE TS_PCLOGS DATAFILE '/db/oradata/WINT/dados/TS_PCLOGS01.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCLOGS ADD DATAFILE '/db/oradata/WINT/dados/TS_PCLOGS02.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCLOGS ADD DATAFILE '/db/oradata/WINT/dados/TS_PCLOGS03.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCLOGS ADD DATAFILE '/db/oradata/WINT/dados/TS_PCLOGS04.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCLOGS ADD DATAFILE '/db/oradata/WINT/dados/TS_PCLOGS05.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCLOGS ADD DATAFILE '/db/oradata/WINT/dados/TS_PCLOGS06.dbf' SIZE 10G;
+--------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCLOGSIDX
+CREATE TABLESPACE TS_PCLOGSIDX DATAFILE '/db/oradata/WINT/indices/TS_PCLOGSIDX01.dbf' SIZE 28G;
+--------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCHISTEST
+CREATE TABLESPACE TS_PCHISTEST DATAFILE '/db/oradata/WINT/dados/TS_PCHISTEST01.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCHISTEST ADD DATAFILE '/db/oradata/WINT/dados/TS_PCHISTEST02.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCHISTEST ADD DATAFILE '/db/oradata/WINT/dados/TS_PCHISTEST03.dbf' SIZE 30G;
+---------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCHISTESTIDX
+
+CREATE TABLESPACE TS_PCHISTESTIDX DATAFILE '/db/oradata/WINT/indices/TS_PCHISTESTIDX01.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCHISTESTIDX ADD DATAFILE '/db/oradata/WINT/indices/TS_PCHISTESTIDX02.dbf' SIZE 16G;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCNFBASESAID
+CREATE TABLESPACE TS_PCNFBASESAID DATAFILE '/db/oradata/WINT/dados/TS_PCNFBASESAID01.dbf' SIZE 2G;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCNFBASESAIDIDX
+CREATE TABLESPACE TS_PCNFBASESAIDIDX DATAFILE '/db/oradata/WINT/indices/TS_PCNFBASESAIDIDX01.dbf' SIZE 2G;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCMOV
+CREATE TABLESPACE TS_PCMOV DATAFILE '/db/oradata/WINT/dados/TS_PCMOV01.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCMOV ADD DATAFILE '/db/oradata/WINT/dados/TS_PCMOV02.dbf' SIZE 30G;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCMOVIDX
+CREATE TABLESPACE TS_PCMOVIDX DATAFILE '/db/oradata/WINT/indices/TS_PCMOVIDX01.dbf' SIZE 32G;
+ALTER TABLESPACE TS_PCMOVIDX ADD DATAFILE '/db/oradata/WINT/indices/TS_PCMOVIDX02.dbf' SIZE 28G;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCPEDI
+CREATE TABLESPACE TS_PCPEDI DATAFILE '/db/oradata/WINT/dados/TS_PCPEDI01.dbf' SIZE 14G;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCPEDIIDX
+CREATE TABLESPACE TS_PCPEDIIDX DATAFILE '/db/oradata/WINT/indices/TS_PCPEDIIDX01.dbf' SIZE 25G;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCPEDC
+CREATE TABLESPACE TS_PCPEDC DATAFILE '/db/oradata/WINT/dados/TS_PCPEDC01.dbf' SIZE 2G;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCPEDCIDX
+CREATE TABLESPACE TS_PCPEDCIDX DATAFILE '/db/oradata/WINT/indices/TS_PCPEDCIDX01.dbf' SIZE 4G;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCNFSAID
+CREATE TABLESPACE TS_PCNFSAID DATAFILE '/db/oradata/WINT/dados/TS_PCNFSAID01.dbf' SIZE 4G;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCNFSAIDIDX
+CREATE TABLESPACE TS_PCNFSAIDIDX DATAFILE '/db/oradata/WINT/indices/TS_PCNFSAIDIDX01.dbf' SIZE 4G;
+-----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCNFENT
+CREATE TABLESPACE TS_PCNFENT DATAFILE '/db/oradata/WINT/dados/TS_PCNFENT01.dbf' SIZE 500M;
+----------------------------------------------------------------------------------------------------
+*** TABLESPACE TS_PCNFENTIDX
+CREATE TABLESPACE TS_PCNFENTIDX DATAFILE '/db/oradata/WINT/indices/TS_PCNFENTIDX01.dbf' SIZE 300M;
+-----------------------------------------------------------------------------------------------------
+

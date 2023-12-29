@@ -1,0 +1,23 @@
+# .bash_profile
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# User specific environment and startup programs
+PATH=$PATH:$HOME/bin
+export PATH
+
+# ORACLE RAC11g e DATABASE 11g
+TMP=/tmp
+TMPDIR=$TMP
+TEMP=$TMP
+export ORACLE_HOSTNAME=db-primario
+export ORACLE_SID=WINT
+export ORACLE_BASE=/oracle/app/oracle
+export ORACLE_HOME=$ORACLE_BASE/product/11.2/db_1
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib
+export ORACLE_TERM=xterm
+export PATH=$PATH:$ORACLE_HOME/bin:$PATH:$GRID_HOME/bin:/usr/bin:/sbin:/usr/sbin:$ORACLE_HOME/OPatch
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
+export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib

@@ -1,0 +1,44 @@
+############################################
+# JEFERSON M. CUNHA - DBA SOLUTION
+############################################
+
+## Backup nivel 1
+00 03 * * * sh /home/oracle/3db/orcldtf1/backup/rman_inc1.sh >> /home/oracle/3db/orcldtf1/backup/rman_inc1_cron.log  2>&1
+
+##BAckup dos archives de hora em hora
+##00 * * * * sh /home/oracle/3db/orcldtf1/backup/rman_archive.sh >> /home/oracle/3db/orcldtf1/backup/rman_archive_cron.log  2>&1
+
+#Backup logico 3DB Consultoria: Todos os dias as 00:00
+00 00 * * * sh /home/oracle/3db/orcldtf1/backup/oracle_expdp_com_compactacao.sh >> /home/oracle/3db/orcldtf1/logs/oracle_expdp_com_compatacao_cron.log  2>&1
+
+#Monitoramento diario 3DB Consultoria instancia 1: Dias: todos as 07:10
+15 07 * * * sh /home/oracle/3db/orcldtf1/monitor/relatorio_diario_inst1.sh >> /home/oracle/3db/orcldtf1/logs/relatorio_diario_inst1_cron.log 2>&1
+
+#Apagando trace de 48 horas
+00 * * * * sh /home/oracle/3db/orcldtf1/monitor/adr_purge.sh >> /home/oracle/3db/orcldtf1/logs/adr_purge.log 2>&1
+
+00 */6 * * *  sh /home/oracle/3db/orcldtf1/monitor/retencaotracer.sh >> /home/oracle/3db/orcldtf1/logs/retencao_tracer.log 2>&1
+[oracle@dtf-odax1 ~]$ cat /home/oracle/3db/orcldtf1/monitor/adr_purge.sh
+# Purge ADR contents (adr_purge.sh)
+. /home/oracle/env_banco.sh
+
+HOME_PATH="diag/rdbms/orcldtf/orcldtf2"
+echo "INFO: adrci purge started at `date`"
+#adrci exec="show homes"|grep -v : | while read file_line
+#do
+echo "INFO: adrci purging diagnostic destination " $HOME_PATH
+echo "INFO: purging ALERT older than 1 hrs"
+adrci exec="set homepath $HOME_PATH;purge -age 1 -type ALERT"
+echo "INFO: purging INCIDENT older than 1 hrs"
+adrci exec="set homepath $HOME_PATH;purge -age 1 -type INCIDENT"
+echo "INFO: purging TRACE older than 1 hrs"
+adrci exec="set homepath $HOME_PATH;purge -age 1 -type TRACE"
+echo "INFO: purging CDUMP older than 1 hrs"
+adrci exec="set homepath $HOME_PATH;purge -age 1 -type CDUMP"
+echo "INFO: purging HM older than 1 hrs"
+adrci exec="set homepath $HOME_PATH;purge -age 1 -type HM"
+echo ""
+echo ""
+#done
+echo
+echo "INFO: adrci purge finished at `date`"

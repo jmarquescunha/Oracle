@@ -1,0 +1,12 @@
+sql "alter database rename file ''+DATA/wint/datafile/system.264.857150369'' to ''+DATA/db/oradata/WINT/dicionario/system.264.857150369''";
+sql "alter database rename file ''+DATA/wint/datafile/sysaux.265.857150465'' to ''+DATA/db/oradata/WINT/dicionario/sysaux.265.857150465''";
+sql "alter database rename file ''+DATA/wint/datafile/ts_undo.266.857150549'' to ''+DATA/db/oradata/WINT/undo/ts_undo.266.857150549''";
+sql "alter database rename file ''/db/oradata/WINT/temporario/ts_temp01.dbf'' to ''+DATA/db/oradata/WINT/temporario/ts_temp01.dbf''";
+
+--------------------------------------------------------------------------------------------
+restore controlfile from autobackup;
+ou
+restore controlfile to '+DGROUP1/orcl/controlfile/control01.ctl' from '/u01/app/oracle/oradata/control01.ctl';
+
+BACKUP AS COPY DATABASE FORMAT '+DATA';
+SWITCH DATABASE TO COPY;

@@ -1,0 +1,18 @@
+create user exporta identified by exporta;
+grant create session to exporta;
+grant exp_full_database to exporta;
+grant imp_full_database to exporta;
+grant  ADMINISTER RESOURCE MANAGER to exporta;
+grant  ADMINISTER SQL MANAGEMENT OBJECT to exporta;
+grant  BACKUP ANY TABLE to exporta;
+grant  CREATE SESSION to exporta;
+grant  CREATE TABLE to exporta;
+grant  EXECUTE ANY PROCEDURE to exporta;
+grant  EXECUTE ANY TYPE to exporta;
+grant  READ ANY FILE GROUP to exporta;
+grant  RESUMABLE to exporta;
+grant  SELECT ANY SEQUENCE to exporta;
+grant  SELECT ANY TABLE to exporta;
+grant  UNLIMITED TABLESPACE to exporta;
+create directory BACKUP as '/backup/datapump/WINT';
+grant read, write on directory BACKUP to exporta;

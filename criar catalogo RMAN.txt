@@ -1,0 +1,25 @@
+create tablespace TS_RMAN datafile '/db/oradata/RMAN/dados/ts_rman01.dbf' size 500m;
+
+create user RMAN identified by DBASOLUTIRMAN default tablespace TS_RMAN temporary tablespace TS_TEMP;
+grant connect, resource, recovery_catalog_owner to RMAN;
+alter user RMAN quota unlimited on TS_RMAN;
+
+--criar orapwd
+orapwd file=$ORACLE_HOME/dbs/orapw$ORACLE_SID password=manager entries=16 force=y
+
+rman target sys/manager@WINT catalog RMAN/DBASOLUTI@RMAN
+rman target / catalog RMAN/DBASOLUTIRMAN@RMAN
+
+create catalog tablespace TS_RMAN;
+register database;
+unregister database;
+
+crosscheck archivelog all;
+list expired archivelog all;
+delete noprompt expired archivelog all;
+
+
+
+crosscheck copy;
+list expired copy;
+delete noprompt expired copy;

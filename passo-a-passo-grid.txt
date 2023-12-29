@@ -1,0 +1,89 @@
+﻿PASSO A PASSO CRIAÇAO ORACLE GRID
+
+**INSTALAR REPOSITORIO
+yum repolist all
+wget https://public-yum.oracle.com/public-yum-ol6.repo
+--------------------------------------------------------------------
+** INSTALAR PACOTES ORACLE ASM 
+yum install oracleasm*
+-----------------------------------------------------------------------------------------
+**SOMENTE PARA DISCOS GPARTED
+yum install 
+yum install parted
+--------------------------------------------------------------------------------------------
+** DESABILITAR O SELINUX
+vim /etc/selinux/config 
+/usr/sbin/getenforce Disabled
+--------------------------------------------------------------------------------------------
+**CONFIGURAR HOSTS E RESOLV.CONF
+vi /etc/hosts
+vi /etc/resolv.conf
+-------------------------------------------------------------------
+Grupos  & ID´s 
+-------------------------------------------------------------------
+groupadd -g 1000 oinstall
+groupadd -g 1001 dba
+groupadd -g 1020 asmadmin
+groupadd -g 1021 asmdba
+groupadd -g 1023 asmoper
+groupadd -g 1024 osasm
+
+ou esses 
+
+/usr/sbin/groupadd -g 501 oinstall
+/usr/sbin/groupadd -g 502 dba
+/usr/sbin/groupadd -g 504 asmadmin
+/usr/sbin/groupadd -g 506 asmdba
+/usr/sbin/groupadd -g 507 asmoper
+/usr/sbin/groupadd -g 508 osasm
+------------------------------------------------------------------------
+** DELETAR GRUPOS
+
+groupdel  oinstall
+groupdel  dba
+groupdel  asmadmin
+groupdel  asmdba
+groupdel  asmoper
+groupdel  osasm
+
+--------------------------------------------------------------------
+Usuários e grupos
+---------------------------------------------------------------------
+
+/usr/sbin/useradd -u 1100 -g oinstall -G dba,asmadmin,asmdba,asmoper,osasm -d /home/oracle -m oracle
+/usr/sbin/useradd -u 1101 -d /home/grid -g oinstall -G asmadmin,asmdba,asmoper grid
+
+ou esse
+
+/usr/sbin/useradd -u 501 -g oinstall -G asmadmin,asmdba,asmoper,dba grid
+/usr/sbin/useradd -u 502 -g oinstall -G dba,asmadmin,asmdba,osasm oracle
+
+usermod -u 502 -g oinstall dba,asmadmin,asmdba,osasm oracle
+
+passwd oracle
+passwd grid
+---------------------------------------------------------------------------------------------
+--Instalar Pacotes preinstall e vncserver
+yum install samba samba-client samba-common
+yum install oracle-rdbms-server-11gR2-preinstall.x86_64 vnc-server  xsetroot xterm   twm tigervnc-server.x86_64 libXfont
+----------------------------------------------------------------------------------------------
+**CONFIGURAR O ASM
+/usr/sbin/getenforce Disabled
+/etc/init.d/oracleasm configure -i
+/usr/sbin/oracleasm createdisk DISK01 /dev/sdb1
+oracleasm listdisks
+---------------------------------------------------------------------------------------------
+**FAZER UM PRE-INSTALL PARA CHECAR OS REQUISITOS COM USUARIO ORACLE
+cd /home/install/grid/
+runcluvfy.sh stage -pre hacfg
+
+**VERIFICACAO PARA RAC
+./runcluvfy.sh stage -pre crsinst -n RACLNX01,RACLNX02 -verbose > /home/grid/resultado_cluvf.txt
+-----------------------------------------------------------------------------------------------
+**INSTALAR GRID
+./runInstaller
+
+
+
+
+
